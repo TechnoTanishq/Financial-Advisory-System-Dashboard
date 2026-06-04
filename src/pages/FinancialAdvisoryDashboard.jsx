@@ -1,4 +1,4 @@
-
+import PlanningSection from './PlanningSection';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Upload, TrendingUp, TrendingDown, DollarSign, PieChart as PieIcon,
@@ -21,6 +21,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE } from '../api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ec4899', '#3b82f6', '#f97316', '#8b5cf6', '#14b8a6'];
@@ -810,154 +811,154 @@ function AnalyticsSection({ analytics, dark }) {
   );
 }
 
-function PlanningSection({ analytics, dark, addToast, budgets, setBudgets }) {
-  const [editingCat, setEditingCat] = useState(null);
-  const [editVal, setEditVal] = useState('');
-  const [goals, setGoals] = useState([{id:1,label:'Emergency Fund',target:100000,saved:0}]);
-  const [goalInput, setGoalInput] = useState({label:'',target:'',saved:''});
-  const [showGoalForm, setShowGoalForm] = useState(false);
-  const spending = analytics?.categoryBreakdown||{};
-  const savingsRate = parseFloat(analytics?.savingsRate||0);
+// function PlanningSection({ analytics, dark, addToast, budgets, setBudgets }) {
+//   const [editingCat, setEditingCat] = useState(null);
+//   const [editVal, setEditVal] = useState('');
+//   const [goals, setGoals] = useState([{id:1,label:'Emergency Fund',target:100000,saved:0}]);
+//   const [goalInput, setGoalInput] = useState({label:'',target:'',saved:''});
+//   const [showGoalForm, setShowGoalForm] = useState(false);
+//   const spending = analytics?.categoryBreakdown||{};
+//   const savingsRate = parseFloat(analytics?.savingsRate||0);
 
-  const addGoal = () => {
-    if (goalInput.label&&goalInput.target) {
-      setGoals(g=>[...g,{id:Date.now(),label:goalInput.label,target:parseFloat(goalInput.target),saved:parseFloat(goalInput.saved||0)}]);
-      setGoalInput({label:'',target:'',saved:''});
-      setShowGoalForm(false);
-      addToast('Goal added!','success');
-    }
-  };
-  const removeGoal = id=>setGoals(g=>g.filter(x=>x.id!==id));
+//   const addGoal = () => {
+//     if (goalInput.label&&goalInput.target) {
+//       setGoals(g=>[...g,{id:Date.now(),label:goalInput.label,target:parseFloat(goalInput.target),saved:parseFloat(goalInput.saved||0)}]);
+//       setGoalInput({label:'',target:'',saved:''});
+//       setShowGoalForm(false);
+//       addToast('Goal added!','success');
+//     }
+//   };
+//   const removeGoal = id=>setGoals(g=>g.filter(x=>x.id!==id));
 
-  const tips = [];
-  if (!analytics) {
-    tips.push({type:'tip',text:'Upload a bank statement CSV or sync your account to get personalized financial insights.'});
-  } else {
-    if (savingsRate<10) tips.push({type:'warn',text:`Your savings rate is only ${savingsRate}%. Try to cut discretionary spending to build an emergency fund first.`});
-    else if (savingsRate<20) tips.push({type:'warn',text:`Your savings rate is ${savingsRate}%. Aim for at least 20% to build a healthy financial cushion.`});
-    else if (savingsRate>=20) tips.push({type:'good',text:`Great job! Your savings rate of ${savingsRate}% is healthy. Keep it up!`});
+//   const tips = [];
+//   if (!analytics) {
+//     tips.push({type:'tip',text:'Upload a bank statement CSV or sync your account to get personalized financial insights.'});
+//   } else {
+//     if (savingsRate<10) tips.push({type:'warn',text:`Your savings rate is only ${savingsRate}%. Try to cut discretionary spending to build an emergency fund first.`});
+//     else if (savingsRate<20) tips.push({type:'warn',text:`Your savings rate is ${savingsRate}%. Aim for at least 20% to build a healthy financial cushion.`});
+//     else if (savingsRate>=20) tips.push({type:'good',text:`Great job! Your savings rate of ${savingsRate}% is healthy. Keep it up!`});
 
-    Object.entries(spending).forEach(([cat,spent])=>{
-      const budget=budgets[cat];
-      if (budget&&spent>budget) tips.push({type:'warn',text:`You've exceeded your ${cat} budget by ₹${(spent-budget).toLocaleString('en-IN')}.`});
-      else if (budget&&(spent/budget)>=0.8) tips.push({type:'warn',text:`${cat} spending is at ${((spent/budget)*100).toFixed(0)}% of your budget — watch out!`});
-    });
+//     Object.entries(spending).forEach(([cat,spent])=>{
+//       const budget=budgets[cat];
+//       if (budget&&spent>budget) tips.push({type:'warn',text:`You've exceeded your ${cat} budget by ₹${(spent-budget).toLocaleString('en-IN')}.`});
+//       else if (budget&&(spent/budget)>=0.8) tips.push({type:'warn',text:`${cat} spending is at ${((spent/budget)*100).toFixed(0)}% of your budget — watch out!`});
+//     });
 
-    const foodPct = analytics.totalExpenses>0?(analytics.categoryBreakdown['Food & Dining']||0)/analytics.totalExpenses*100:0;
-    if (foodPct>30) tips.push({type:'tip',text:`Food & Dining takes up ${foodPct.toFixed(0)}% of your expenses. Meal prepping or cooking at home more could save significantly.`});
+//     const foodPct = analytics.totalExpenses>0?(analytics.categoryBreakdown['Food & Dining']||0)/analytics.totalExpenses*100:0;
+//     if (foodPct>30) tips.push({type:'tip',text:`Food & Dining takes up ${foodPct.toFixed(0)}% of your expenses. Meal prepping or cooking at home more could save significantly.`});
 
-    const shoppingPct = analytics.totalExpenses>0?(analytics.categoryBreakdown['Shopping']||0)/analytics.totalExpenses*100:0;
-    if (shoppingPct>25) tips.push({type:'tip',text:`Shopping accounts for ${shoppingPct.toFixed(0)}% of spending. Consider a 24-hour rule before impulse purchases.`});
+//     const shoppingPct = analytics.totalExpenses>0?(analytics.categoryBreakdown['Shopping']||0)/analytics.totalExpenses*100:0;
+//     if (shoppingPct>25) tips.push({type:'tip',text:`Shopping accounts for ${shoppingPct.toFixed(0)}% of spending. Consider a 24-hour rule before impulse purchases.`});
 
-    if (analytics.totalIncome>0&&analytics.totalExpenses>analytics.totalIncome)
-      tips.push({type:'warn',text:`You're spending more than you earn this period. Review your biggest expense categories urgently.`});
+//     if (analytics.totalIncome>0&&analytics.totalExpenses>analytics.totalIncome)
+//       tips.push({type:'warn',text:`You're spending more than you earn this period. Review your biggest expense categories urgently.`});
     
-    if (goals.some(g=>g.saved<g.target)&&savingsRate>0)
-      tips.push({type:'tip',text:`At your current savings rate, automate transfers on payday to hit your goals faster without willpower drain.`});
-  }
+//     if (goals.some(g=>g.saved<g.target)&&savingsRate>0)
+//       tips.push({type:'tip',text:`At your current savings rate, automate transfers on payday to hit your goals faster without willpower drain.`});
+//   }
 
-  return (
-    <div className="space-y-6">
-      <SectionTitle title="Planning" subtitle="Budget tracking, financial goals, and insights" dark={dark}/>
-      <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
-        <h3 className={`font-semibold mb-5 ${dark?'text-white':'text-gray-800'}`}>Budget vs Actual</h3>
-        <div className="space-y-4">
-          {Object.entries(budgets).map(([cat,budget])=>{
-            const spent=spending[cat]||0;
-            const pct=budget>0?Math.min(100,(spent/budget)*100):0;
-            const over=spent>budget;
-            const Icon=getCategoryIcon(cat);
-            return (
-              <div key={cat}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2"><Icon size={14} className={dark?'text-gray-400':'text-gray-500'}/>
-                    <span className={`text-sm font-medium ${dark?'text-gray-300':'text-gray-700'}`}>{cat}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-mono ${over?'text-red-500':dark?'text-gray-400':'text-gray-500'}`}>₹{spent.toFixed(0)} / ₹{budget.toFixed(0)}</span>
-                    {editingCat===cat?(
-                      <div className="flex items-center gap-1">
-                        <input value={editVal} onChange={e=>setEditVal(e.target.value)}
-                          className={`w-20 text-xs px-2 py-1 rounded border outline-none ${dark?'bg-gray-700 border-gray-600 text-white':'bg-white border-gray-300'}`}/>
-                        <button onClick={()=>{setBudgets(b=>({...b,[editingCat]:parseFloat(editVal)||0}));setEditingCat(null);addToast('Budget updated','success');}} className="text-xs px-2 py-1 bg-indigo-600 text-white rounded">✓</button>
-                        <button onClick={()=>setEditingCat(null)} className={`text-xs px-2 py-1 rounded ${dark?'bg-gray-700 text-gray-300':'bg-gray-100 text-gray-600'}`}>✕</button>
-                      </div>
-                    ):(
-                      <button onClick={()=>{setEditingCat(cat);setEditVal(budget||'');}} className={`text-xs px-2 py-0.5 rounded ${dark?'text-gray-400 hover:text-gray-200':'text-gray-400 hover:text-gray-600'}`}>Edit</button>
-                    )}
-                  </div>
-                </div>
-                <div className={`h-2 rounded-full ${dark?'bg-gray-700':'bg-gray-100'}`}>
-                  <div className={`h-2 rounded-full transition-all ${over?'bg-red-500':'bg-indigo-500'}`} style={{width:`${pct}%`}}/>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className={`font-semibold ${dark?'text-white':'text-gray-800'}`}>Financial Goals</h3>
-          <button onClick={()=>setShowGoalForm(f=>!f)} className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-            <Plus size={14}/>{showGoalForm?'Cancel':'Add Goal'}
-          </button>
-        </div>
-        {showGoalForm&&(
-          <div className={`mb-5 p-4 rounded-xl border space-y-3 ${dark?'bg-gray-750 border-gray-700':'bg-gray-50 border-gray-200'}`}>
-            <input placeholder="Goal name" value={goalInput.label} onChange={e=>setGoalInput(g=>({...g,label:e.target.value}))}
-              className={`w-full text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="number" placeholder="Target (₹)" value={goalInput.target} onChange={e=>setGoalInput(g=>({...g,target:e.target.value}))}
-                className={`text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
-              <input type="number" placeholder="Saved so far (₹)" value={goalInput.saved} onChange={e=>setGoalInput(g=>({...g,saved:e.target.value}))}
-                className={`text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
-            </div>
-            <button onClick={addGoal} className="w-full py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">Save Goal</button>
-          </div>
-        )}
-        <div className="space-y-3">
-          {goals.map(goal=>{
-            const pct=Math.min(100,((goal.saved/goal.target)*100)).toFixed(1);
-            const months=analytics?.totalIncome>0&&savingsRate>0?Math.ceil((goal.target-goal.saved)/(analytics.totalIncome*savingsRate/100)):null;
-            return (
-              <div key={goal.id} className={`p-4 rounded-xl ${dark?'bg-gray-750':'bg-indigo-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className={`font-semibold text-sm ${dark?'text-white':'text-indigo-900'}`}>{goal.label}</p>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-lg font-bold font-mono ${dark?'text-indigo-400':'text-indigo-600'}`}>{pct}%</span>
-                    <button onClick={()=>removeGoal(goal.id)} className="opacity-40 hover:opacity-80 text-red-500"><X size={14}/></button>
-                  </div>
-                </div>
-                <p className={`text-xs mb-2 ${dark?'text-gray-400':'text-indigo-600'}`}>₹{goal.saved.toLocaleString('en-IN')} of ₹{goal.target.toLocaleString('en-IN')}</p>
-                <div className={`h-2.5 rounded-full ${dark?'bg-gray-700':'bg-indigo-200'}`}>
-                  <div className="h-2.5 rounded-full bg-indigo-500 transition-all" style={{width:`${pct}%`}}/>
-                </div>
-                {months&&<p className={`text-xs mt-2 ${dark?'text-gray-400':'text-indigo-700'}`}>~<strong>{months} month{months!==1?'s':''}</strong> at current savings rate</p>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
-        <h3 className={`font-semibold mb-4 ${dark?'text-white':'text-gray-800'}`}>Personalized Insights</h3>
-        {!tips.length&&<p className={`text-sm ${dark?'text-gray-500':'text-gray-400'}`}>Upload transactions to get personalized advice.</p>}
-        <div className="space-y-3">
-          {tips.map((tip,i)=>{
-            const Icon=tip.type==='good'?CheckCircle:tip.type==='warn'?AlertTriangle:Target;
-            const color=tip.type==='good'?'text-emerald-500':tip.type==='warn'?'text-amber-500':'text-blue-500';
-            const bg=tip.type==='good'?dark?'bg-emerald-900/20 border-emerald-800':'bg-emerald-50 border-emerald-100':tip.type==='warn'?dark?'bg-amber-900/20 border-amber-800':'bg-amber-50 border-amber-100':dark?'bg-blue-900/20 border-blue-800':'bg-blue-50 border-blue-100';
-            return (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${bg}`}>
-                <Icon size={16} className={`mt-0.5 flex-shrink-0 ${color}`}/>
-                <p className={`text-sm ${dark?'text-gray-300':'text-gray-700'}`}>{tip.text}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
+//   return (
+//     <div className="space-y-6">
+//       <SectionTitle title="Planning" subtitle="Budget tracking, financial goals, and insights" dark={dark}/>
+//       <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
+//         <h3 className={`font-semibold mb-5 ${dark?'text-white':'text-gray-800'}`}>Budget vs Actual</h3>
+//         <div className="space-y-4">
+//           {Object.entries(budgets).map(([cat,budget])=>{
+//             const spent=spending[cat]||0;
+//             const pct=budget>0?Math.min(100,(spent/budget)*100):0;
+//             const over=spent>budget;
+//             const Icon=getCategoryIcon(cat);
+//             return (
+//               <div key={cat}>
+//                 <div className="flex items-center justify-between mb-1.5">
+//                   <div className="flex items-center gap-2"><Icon size={14} className={dark?'text-gray-400':'text-gray-500'}/>
+//                     <span className={`text-sm font-medium ${dark?'text-gray-300':'text-gray-700'}`}>{cat}</span>
+//                   </div>
+//                   <div className="flex items-center gap-3">
+//                     <span className={`text-xs font-mono ${over?'text-red-500':dark?'text-gray-400':'text-gray-500'}`}>₹{spent.toFixed(0)} / ₹{budget.toFixed(0)}</span>
+//                     {editingCat===cat?(
+//                       <div className="flex items-center gap-1">
+//                         <input value={editVal} onChange={e=>setEditVal(e.target.value)}
+//                           className={`w-20 text-xs px-2 py-1 rounded border outline-none ${dark?'bg-gray-700 border-gray-600 text-white':'bg-white border-gray-300'}`}/>
+//                         <button onClick={()=>{setBudgets(b=>({...b,[editingCat]:parseFloat(editVal)||0}));setEditingCat(null);addToast('Budget updated','success');}} className="text-xs px-2 py-1 bg-indigo-600 text-white rounded">✓</button>
+//                         <button onClick={()=>setEditingCat(null)} className={`text-xs px-2 py-1 rounded ${dark?'bg-gray-700 text-gray-300':'bg-gray-100 text-gray-600'}`}>✕</button>
+//                       </div>
+//                     ):(
+//                       <button onClick={()=>{setEditingCat(cat);setEditVal(budget||'');}} className={`text-xs px-2 py-0.5 rounded ${dark?'text-gray-400 hover:text-gray-200':'text-gray-400 hover:text-gray-600'}`}>Edit</button>
+//                     )}
+//                   </div>
+//                 </div>
+//                 <div className={`h-2 rounded-full ${dark?'bg-gray-700':'bg-gray-100'}`}>
+//                   <div className={`h-2 rounded-full transition-all ${over?'bg-red-500':'bg-indigo-500'}`} style={{width:`${pct}%`}}/>
+//                 </div>
+//               </div>
+//             );
+//           })}
+//         </div>
+//       </div>
+//       <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
+//         <div className="flex items-center justify-between mb-5">
+//           <h3 className={`font-semibold ${dark?'text-white':'text-gray-800'}`}>Financial Goals</h3>
+//           <button onClick={()=>setShowGoalForm(f=>!f)} className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+//             <Plus size={14}/>{showGoalForm?'Cancel':'Add Goal'}
+//           </button>
+//         </div>
+//         {showGoalForm&&(
+//           <div className={`mb-5 p-4 rounded-xl border space-y-3 ${dark?'bg-gray-750 border-gray-700':'bg-gray-50 border-gray-200'}`}>
+//             <input placeholder="Goal name" value={goalInput.label} onChange={e=>setGoalInput(g=>({...g,label:e.target.value}))}
+//               className={`w-full text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
+//             <div className="grid grid-cols-2 gap-2">
+//               <input type="number" placeholder="Target (₹)" value={goalInput.target} onChange={e=>setGoalInput(g=>({...g,target:e.target.value}))}
+//                 className={`text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
+//               <input type="number" placeholder="Saved so far (₹)" value={goalInput.saved} onChange={e=>setGoalInput(g=>({...g,saved:e.target.value}))}
+//                 className={`text-sm px-3 py-2 rounded-lg border outline-none ${dark?'bg-gray-700 border-gray-600 text-white placeholder-gray-500':'bg-white border-gray-300'}`}/>
+//             </div>
+//             <button onClick={addGoal} className="w-full py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">Save Goal</button>
+//           </div>
+//         )}
+//         <div className="space-y-3">
+//           {goals.map(goal=>{
+//             const pct=Math.min(100,((goal.saved/goal.target)*100)).toFixed(1);
+//             const months=analytics?.totalIncome>0&&savingsRate>0?Math.ceil((goal.target-goal.saved)/(analytics.totalIncome*savingsRate/100)):null;
+//             return (
+//               <div key={goal.id} className={`p-4 rounded-xl ${dark?'bg-gray-750':'bg-indigo-50'}`}>
+//                 <div className="flex items-center justify-between mb-2">
+//                   <p className={`font-semibold text-sm ${dark?'text-white':'text-indigo-900'}`}>{goal.label}</p>
+//                   <div className="flex items-center gap-2">
+//                     <span className={`text-lg font-bold font-mono ${dark?'text-indigo-400':'text-indigo-600'}`}>{pct}%</span>
+//                     <button onClick={()=>removeGoal(goal.id)} className="opacity-40 hover:opacity-80 text-red-500"><X size={14}/></button>
+//                   </div>
+//                 </div>
+//                 <p className={`text-xs mb-2 ${dark?'text-gray-400':'text-indigo-600'}`}>₹{goal.saved.toLocaleString('en-IN')} of ₹{goal.target.toLocaleString('en-IN')}</p>
+//                 <div className={`h-2.5 rounded-full ${dark?'bg-gray-700':'bg-indigo-200'}`}>
+//                   <div className="h-2.5 rounded-full bg-indigo-500 transition-all" style={{width:`${pct}%`}}/>
+//                 </div>
+//                 {months&&<p className={`text-xs mt-2 ${dark?'text-gray-400':'text-indigo-700'}`}>~<strong>{months} month{months!==1?'s':''}</strong> at current savings rate</p>}
+//               </div>
+//             );
+//           })}
+//         </div>
+//       </div>
+//       <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
+//         <h3 className={`font-semibold mb-4 ${dark?'text-white':'text-gray-800'}`}>Personalized Insights</h3>
+//         {!tips.length&&<p className={`text-sm ${dark?'text-gray-500':'text-gray-400'}`}>Upload transactions to get personalized advice.</p>}
+//         <div className="space-y-3">
+//           {tips.map((tip,i)=>{
+//             const Icon=tip.type==='good'?CheckCircle:tip.type==='warn'?AlertTriangle:Target;
+//             const color=tip.type==='good'?'text-emerald-500':tip.type==='warn'?'text-amber-500':'text-blue-500';
+//             const bg=tip.type==='good'?dark?'bg-emerald-900/20 border-emerald-800':'bg-emerald-50 border-emerald-100':tip.type==='warn'?dark?'bg-amber-900/20 border-amber-800':'bg-amber-50 border-amber-100':dark?'bg-blue-900/20 border-blue-800':'bg-blue-50 border-blue-100';
+//             return (
+//               <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${bg}`}>
+//                 <Icon size={16} className={`mt-0.5 flex-shrink-0 ${color}`}/>
+//                 <p className={`text-sm ${dark?'text-gray-300':'text-gray-700'}`}>{tip.text}</p>
+//               </div>
+//             );
+//           })}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function FinancialAdvisoryDashboard() {
@@ -1017,7 +1018,7 @@ export default function FinancialAdvisoryDashboard() {
     try {
       const token=localStorage.getItem('token');
       if (!token) return;
-      const res=await fetch('http://localhost:8083/wallet/balance',{headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}});
+      const res=await fetch(`${API_BASE}/wallet/balance`,{headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}});
       if (!res.ok) throw new Error();
       const data=await res.json();
       setWalletBalance(data.balance??data.amount??data.walletBalance??null);
@@ -1029,7 +1030,7 @@ export default function FinancialAdvisoryDashboard() {
       const token=localStorage.getItem('token');
       const storedUser=JSON.parse(localStorage.getItem('user')||'{}');
       if (!token) return;
-      const res=await fetch('http://localhost:8083/transactions/history',{headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}});
+      const res=await fetch(`${API_BASE}/transactions/analytics`,{headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'}});
       if (!res.ok) throw new Error();
       const data=await res.json();
       const history=data.transactions||[];
@@ -1071,6 +1072,8 @@ export default function FinancialAdvisoryDashboard() {
     {id:'planning',label:'Planning',icon:Calendar},
   ];
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const bg = dark?'bg-gray-900':'bg-gray-50';
   const sidebarBg = dark?'bg-gray-950 border-gray-800':'bg-white border-gray-200';
   const textMain = dark?'text-white':'text-gray-900';
@@ -1107,21 +1110,29 @@ export default function FinancialAdvisoryDashboard() {
           }}/>
       )}
 
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={()=>setSidebarOpen(false)}/>
+      )}
+
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full w-60 flex flex-col border-r ${sidebarBg} z-30 shadow-sm`}>
-        <div className={`px-6 py-5 border-b ${dark?'border-gray-800':'border-gray-100'}`}>
+      <aside className={`fixed left-0 top-0 h-full w-60 flex flex-col border-r ${sidebarBg} z-30 shadow-sm transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className={`px-6 py-5 border-b ${dark?'border-gray-800':'border-gray-100'} flex items-center justify-between`}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-md">
               <Wallet size={16} className="text-white"/>
             </div>
             <span className={`font-bold text-base tracking-tight ${textMain}`}>AstraGuard</span>
           </div>
+          <button className="md:hidden p-1 rounded-lg" onClick={()=>setSidebarOpen(false)}>
+            <X size={18} className={textMuted}/>
+          </button>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {navItems.map(({id,label,icon:Icon})=>{
             const active=section===id;
             return (
-              <button key={id} onClick={()=>setSection(id)}
+              <button key={id} onClick={()=>{setSection(id); setSidebarOpen(false);}}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active
                   ?'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                   :dark?'text-gray-400 hover:bg-gray-800 hover:text-white':'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}>
@@ -1149,12 +1160,20 @@ export default function FinancialAdvisoryDashboard() {
       </aside>
 
       {/* Main */}
-      <main className="ml-60 flex-1 min-h-screen">
+      <main className="md:ml-60 flex-1 min-h-screen">
         {/* ── Topbar ── */}
-        <div className={`sticky top-0 z-20 px-8 py-4 border-b flex items-center justify-between backdrop-blur-sm ${dark?'bg-gray-900/90 border-gray-800':'bg-white/90 border-gray-100'}`}>
-          <div>
-            <h1 className={`text-lg font-bold ${textMain}`}>{navItems.find(n=>n.id===section)?.label}</h1>
-            <p className={`text-xs ${textMuted}`}>{new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+        <div className={`sticky top-0 z-20 px-4 md:px-8 py-4 border-b flex items-center justify-between backdrop-blur-sm ${dark?'bg-gray-900/90 border-gray-800':'bg-white/90 border-gray-100'}`}>
+          <div className="flex items-center gap-3">
+            {/* Hamburger */}
+            <button className="md:hidden p-2 rounded-xl" onClick={()=>setSidebarOpen(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={textMuted}>
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+            <div>
+              <h1 className={`text-base md:text-lg font-bold ${textMain}`}>{navItems.find(n=>n.id===section)?.label}</h1>
+              <p className={`text-xs ${textMuted} hidden sm:block`}>{new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1167,8 +1186,8 @@ export default function FinancialAdvisoryDashboard() {
             </button>
 
             {/* Import CSV */}
-            <label className="flex items-center gap-2 text-sm px-4 py-2 bg-indigo-600 text-white rounded-xl cursor-pointer hover:bg-indigo-700 transition font-medium shadow-sm">
-              <Upload size={15}/> Import CSV
+            <label className="flex items-center gap-2 text-sm px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-xl cursor-pointer hover:bg-indigo-700 transition font-medium shadow-sm">
+              <Upload size={15}/> <span className="hidden sm:inline">Import CSV</span>
               <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden"/>
             </label>
 
@@ -1211,7 +1230,7 @@ export default function FinancialAdvisoryDashboard() {
           </div>
         </div>
 
-        <div className="px-8 py-6">
+        <div className="px-4 md:px-8 py-4 md:py-6">
           {/* Upload / Budget Alerts */}
           {uploadedFile && (
             <div className={`mb-5 flex items-center justify-between p-3 px-4 rounded-xl border text-sm ${dark?'bg-emerald-900/20 border-emerald-800 text-emerald-400':'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
@@ -1224,9 +1243,9 @@ export default function FinancialAdvisoryDashboard() {
           {/* ── DASHBOARD ── */}
           {section==='dashboard' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                 {/* Wallet Card */}
-                <div className={`rounded-2xl p-6 border col-span-1 ${dark?'bg-indigo-900/40 border-indigo-800':'bg-gradient-to-br from-indigo-600 to-violet-600'}`}>
+                <div className={`rounded-2xl p-4 md:p-6 border col-span-2 md:col-span-1 ${dark?'bg-indigo-900/40 border-indigo-800':'bg-gradient-to-br from-indigo-600 to-violet-600'}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-1">Wallet Balance</p>
@@ -1255,7 +1274,7 @@ export default function FinancialAdvisoryDashboard() {
               </div>
 
               {/* Transactions + Chart */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 <div className={`rounded-2xl border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
                   <div className={`flex items-center justify-between px-5 py-4 border-b ${dark?'border-gray-700':'border-gray-100'}`}>
                     <h3 className={`font-semibold text-sm ${textMain}`}>Recent Transactions</h3>
@@ -1312,7 +1331,7 @@ export default function FinancialAdvisoryDashboard() {
               {analytics?.categoryBreakdown&&Object.keys(analytics.categoryBreakdown).length>0&&(
                 <div className={`rounded-2xl p-6 border ${dark?'bg-gray-800 border-gray-700':'bg-white border-gray-100'}`}>
                   <h3 className={`font-semibold text-sm mb-5 ${textMain}`}>Spending by Category</h3>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
                     {Object.entries(analytics.categoryBreakdown).sort((a,b)=>b[1]-a[1]).map(([cat,amt],i)=>{
                       const Icon=getCategoryIcon(cat);
                       const pct=((amt/analytics.totalExpenses)*100).toFixed(0);
@@ -1337,7 +1356,8 @@ export default function FinancialAdvisoryDashboard() {
 
           {section==='reports'&&<ReportsSection analytics={analytics} transactions={transactions} dark={dark} addToast={addToast}/>}
           {section==='analytics'&&<AnalyticsSection analytics={analytics} dark={dark}/>}
-          {section==='planning'&&<PlanningSection analytics={analytics} dark={dark} addToast={addToast} budgets={budgets} setBudgets={setBudgets}/>}
+          {section==='planning'&&<PlanningSection analytics={analytics} dark={dark} addToast={addToast} budgets={budgets} setBudgets={setBudgets} transactions={transactions}/>}
+          {/* {section==='planning'&&<PlanningSection analytics={analytics} dark={dark} addToast={addToast} budgets={budgets} setBudgets={setBudgets}/>} */}
         </div>
       </main>
 

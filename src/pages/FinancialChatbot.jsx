@@ -419,11 +419,13 @@ import {
   ArrowDownLeft, Filter, Search, Paperclip, Smile
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { API_BASE } from '../api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const MODEL = 'llama3.2:1b';
-const HISTORY_API = 'http://localhost:8083/transactions/history';
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL = 'llama-3.1-8b-instant';
+const HISTORY_API = `${API_BASE}/transactions/analytics`;
 
 const SUGGESTED_QUESTIONS = [
   { icon: TrendingDown, text: 'Where am I spending the most money?', category: 'spending' },
@@ -747,9 +749,10 @@ export default function FinancialChatbot() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [txLoading, setTxLoading] = useState(false);
-  const [ollamaStatus, setOllamaStatus] = useState('checking');
+  const [groqStatus] = useState('online');
   const [showStats, setShowStats] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const abortRef = useRef(null);
@@ -761,17 +764,6 @@ export default function FinancialChatbot() {
 
   useEffect(() => { localStorage.setItem('finAdvisorDark', dark); }, [dark]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
-  // Ollama Status Check
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(2000) });
-        setOllamaStatus(res.ok ? 'online' : 'offline');
-      } catch { setOllamaStatus('offline'); }
-    };
-    check();
-  }, []);
 
   // Fetch Transactions
   const fetchTransactions = useCallback(async () => {
@@ -812,51 +804,50 @@ export default function FinancialChatbot() {
     }]);
   }, [fetchTransactions]);
 
-  const sendToOllama = useCallback(async (userText, targetId) => {
+  const sendToGroq = useCallback(async (userText, targetId) => {
     const systemPrompt = buildSystemPrompt(transactions);
-
-    const fullPrompt = `<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-${systemPrompt}<|eot_id|><|start_header_id|>user<|end_header_id|>
-${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
-
     const controller = new AbortController();
     abortRef.current = controller;
 
-    try {
-      const response = await fetch(OLLAMA_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: MODEL, prompt: fullPrompt, stream: true }),
-        signal: controller.signal,
-      });
+    const response = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userText },
+        ],
+        stream: true,
+        max_tokens: 700,
+      }),
+      signal: controller.signal,
+    });
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(Boolean);
-
-        for (const line of lines) {
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.response) {
-              fullResponse += parsed.response;
-              setMessages(prev => prev.map(m =>
-                m.id === targetId ? { ...m, content: fullResponse, isLoading: false } : m
-              ));
-            }
-          } catch (e) {
-            console.error("Error parsing JSON chunk", e);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: ') && l !== 'data: [DONE]');
+      for (const line of lines) {
+        try {
+          const parsed = JSON.parse(line.slice(6));
+          const token = parsed.choices?.[0]?.delta?.content;
+          if (token) {
+            fullResponse += token;
+            setMessages(prev => prev.map(m =>
+              m.id === targetId ? { ...m, content: fullResponse, isLoading: false } : m
+            ));
           }
-        }
+        } catch { /* skip malformed chunks */ }
       }
-    } catch (err) {
-      console.error("Ollama error:", err);
     }
   }, [transactions]);
 
@@ -877,10 +868,10 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
     setIsStreaming(true);
 
     try {
-      await sendToOllama(text, botMsgId);
+      await sendToGroq(text, botMsgId);
     } catch (err) {
       setMessages(prev => prev.map(m =>
-        m.id === botMsgId ? { ...m, content: "⚠️ Connection to Ollama failed. Please check if Ollama is running.", isLoading: false } : m
+        m.id === botMsgId ? { ...m, content: "⚠️ Failed to reach FinAdvisory API. Please try again.", isLoading: false } : m
       ));
     } finally {
       setIsStreaming(false);
@@ -921,9 +912,14 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
 
   return (
     <div className={`min-h-screen flex ${bg} transition-colors duration-200`} style={{ fontFamily: "'DM Sans', -apple-system, sans-serif" }}>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full w-64 flex flex-col border-r ${sidebarBg} z-30 shadow-lg`}>
-        <div className={`px-6 py-5 border-b ${dark ? 'border-gray-800' : 'border-gray-200'}`}>
+      <aside className={`fixed left-0 top-0 h-full w-64 flex flex-col border-r ${sidebarBg} z-30 shadow-lg transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        <div className={`px-6 py-5 border-b ${dark ? 'border-gray-800' : 'border-gray-200'} flex items-center justify-between`}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
               <Wallet size={18} className="text-white" />
@@ -933,6 +929,9 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
               <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-500'}`}>AI Financial Advisor</p>
             </div>
           </div>
+          <button className="md:hidden p-1 rounded-lg" onClick={() => setSidebarOpen(false)}>
+            <X size={18} className={dark ? 'text-gray-400' : 'text-gray-500'} />
+          </button>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -944,7 +943,7 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
           ].map(({ id, icon: Icon, label }) => (
             <button 
               key={id} 
-              onClick={() => handleNavigation(id)}
+              onClick={() => { handleNavigation(id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition duration-200 ${
                 dark 
                   ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' 
@@ -986,30 +985,36 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
         </div>
       </aside>
 
-      <main className="ml-64 flex-1 min-h-screen flex flex-col">
+      <main className="md:ml-64 flex-1 min-h-screen flex flex-col">
         {/* Enhanced Topbar */}
-        <div className={`sticky top-0 z-20 px-8 py-4 border-b flex items-center justify-between backdrop-blur-sm ${
+        <div className={`sticky top-0 z-20 px-4 md:px-8 py-4 border-b flex items-center justify-between backdrop-blur-sm ${
           dark 
             ? 'bg-gray-900/80 border-gray-800' 
             : 'bg-white/80 border-gray-200'
         }`}>
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-3 flex-1">
+            {/* Hamburger */}
+            <button className="md:hidden p-2 rounded-xl" onClick={() => setSidebarOpen(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={dark ? 'text-gray-400' : 'text-gray-600'}>
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Sparkles size={18} className="text-white" />
               </div>
               <div>
-                <h1 className={`text-lg font-bold ${textMain}`}>Financial Assistant</h1>
+                <h1 className={`text-base md:text-lg font-bold ${textMain}`}>Financial Assistant</h1>
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${ollamaStatus === 'online' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-red-500'}`} />
-                  <p className="text-xs text-gray-500">{ollamaStatus === 'online' ? 'Llama 3.2 · Local' : 'Ollama Offline'}</p>
+                  <div className={`w-2 h-2 rounded-full ${groqStatus === 'online' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-red-500'}`} />
+                  <p className="text-xs text-gray-500">{groqStatus === 'online' ? ' FinAdvisor · FinAdvisor Bot' : 'Chatbot Offline'}</p>
                 </div>
               </div>
             </div>
 
             {/* Search Bar */}
             {messages.length > 0 && (
-              <div className={`ml-auto flex items-center gap-2 px-4 py-2 rounded-xl border ${
+              <div className={`ml-auto hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border ${
                 dark 
                   ? 'bg-gray-800 border-gray-700' 
                   : 'bg-gray-100 border-gray-200'
@@ -1074,7 +1079,7 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
         <div className="flex flex-1 overflow-hidden">
           {/* Chat Area */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6">
               {filteredMessages.length === 0 && messages.length === 1 ? (
                 <EmptyState dark={dark} onQuestionClick={handleSend} />
               ) : (
@@ -1093,7 +1098,7 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
             </div>
 
             {/* Input Bar */}
-            <div className={`p-6 border-t ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+            <div className={`p-3 md:p-6 border-t ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
               <div className={`flex items-end gap-3 px-4 py-3 rounded-2xl border backdrop-blur-sm ${
                 dark 
                   ? 'bg-gray-800/50 border-gray-700' 
@@ -1128,7 +1133,7 @@ ${userText}<|eot_id|><|start_header_id|>assistant<|end_header_id|>`;
           </div>
 
           {/* Quick Questions Sidebar */}
-          <div className={`w-72 border-l p-6 overflow-y-auto ${
+          <div className={`hidden lg:block w-72 border-l p-6 overflow-y-auto ${
             dark 
               ? 'border-gray-800 bg-gray-900/50' 
               : 'border-gray-200 bg-gradient-to-b from-gray-50 to-white'

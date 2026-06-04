@@ -481,10 +481,10 @@ const handleDemo = () =>{
             }}>
               Transform your financial data into actionable insights with cutting-edge AI technology and real-time analytics
             </p>
-            <div className="animate-fade-in-up delay-300" style={{
+            <div className="animate-fade-in-up delay-300 hero-cta" style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.5rem',
+              gap: '1rem',
               justifyContent: 'center',
               alignItems: 'center'
             }}>
@@ -577,8 +577,8 @@ const handleDemo = () =>{
 
         <style>{`
           @media (min-width: 640px) {
-            .animate-fade-in-up:last-child > div {
-              flex-direction: row;
+            .hero-cta {
+              flex-direction: row !important;
             }
           }
         `}</style>
@@ -604,7 +604,7 @@ const handleDemo = () =>{
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '2rem'
           }}>
             {[
@@ -718,7 +718,7 @@ const handleDemo = () =>{
         <div style={{ position: 'relative', maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '4rem',
             alignItems: 'center'
           }}>
@@ -878,7 +878,7 @@ const handleDemo = () =>{
         <div style={{ position: 'relative', maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '4rem'
           }}>
             <div>

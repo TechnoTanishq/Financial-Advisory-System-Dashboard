@@ -11,6 +11,7 @@ import {
   EyeOff,
   User
 } from 'lucide-react';
+import { API_BASE } from '../api';
 
 export default function FinancialLoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -30,7 +31,7 @@ export default function FinancialLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8083/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ upiId, password }),
@@ -57,7 +58,7 @@ export default function FinancialLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8083/auth/signup', {
+      const response = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +91,7 @@ export default function FinancialLoginPage() {
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+      <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-4 md:gap-8 items-center">
 
         {/* LEFT SIDE BRANDING (UNCHANGED) */}
         <div className="text-white space-y-8 hidden lg:block">
@@ -119,7 +120,7 @@ export default function FinancialLoginPage() {
         </div>
 
         {/* RIGHT SIDE FORM */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 backdrop-blur-xl">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12 backdrop-blur-xl">
           <div className="mb-8">
             <h3 className="text-3xl font-bold text-slate-800 mb-2">
               {isSignup ? "Create Account" : "Welcome Back!"}

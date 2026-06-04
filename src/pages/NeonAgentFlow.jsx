@@ -96,7 +96,7 @@ export default function NeonAgentFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8 overflow-hidden relative">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 md:p-8 overflow-hidden relative">
       {/* Animated background grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
       
@@ -107,15 +107,15 @@ export default function NeonAgentFlow() {
       <div className="relative w-full max-w-7xl">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-pink-400 to-lime-400 bg-clip-text text-transparent animate-pulse">
+          <h1 className="text-3xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-pink-400 to-lime-400 bg-clip-text text-transparent animate-pulse">
             AI Agent Flow
           </h1>
-          <div className="flex justify-center gap-4 mt-8">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-4 mt-6 md:mt-8">
             {flows.map((flow) => (
               <button
                 key={flow.id}
                 onClick={() => setActiveFlow(flow.id)}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                className={`px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-semibold transition-all duration-300 ${
                   activeFlow === flow.id
                     ? `bg-${flow.color}-500/20 text-${flow.color}-400 shadow-[0_0_20px_rgba(0,255,255,0.5)] border-2 border-${flow.color}-400`
                     : 'bg-slate-800/50 text-slate-500 border-2 border-slate-700 hover:border-slate-600'
@@ -133,7 +133,7 @@ export default function NeonAgentFlow() {
         </div>
 
         {/* Flow Container */}
-        <div className="relative h-[600px]">
+        <div className="relative h-[min(600px,70vw)] md:h-[600px]">
           <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
             <defs>
               {/* Neon glow filters */}
