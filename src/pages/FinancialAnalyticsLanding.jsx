@@ -891,9 +891,9 @@ const handleDemo = () =>{
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {[
-                  { icon: <Mail size={24} />, label: 'Email', value: 'contact@astraguard-inAdvisory.com' },
-                  { icon: <Phone size={24} />, label: 'Phone', value: '+1 (555) 123-4567' },
-                  { icon: <MapPin size={24} />, label: 'Address', value: '123 Finance Street, New York, NY 10001' }
+                  { icon: <Mail size={24} />, label: 'Email', value: 'tanishq.kathar06@gmail.com' },
+                  { icon: <Phone size={24} />, label: 'Phone', value: '7720054341' },
+                  { icon: <MapPin size={24} />, label: 'Address', value: 'Pune , Maharashtra , India' }
                 ].map((contact, index) => (
                   <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div className="neon-glow" style={{
@@ -916,95 +916,7 @@ const handleDemo = () =>{
               </div>
             </div>
 
-            <div className="glass-effect neon-border" style={{ borderRadius: '1rem', padding: '2rem' }}>
-              <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#d1d5db' }}>Name</label>
-                  <input
-                    type="text"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      background: 'rgba(15, 23, 42, 0.5)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      transition: 'border-color 0.3s',
-                      color: 'white',
-                      fontSize: '1rem'
-                    }}
-                    placeholder="Your name"
-                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)'}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#d1d5db' }}>Email</label>
-                  <input
-                    type="email"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      background: 'rgba(15, 23, 42, 0.5)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      transition: 'border-color 0.3s',
-                      color: 'white',
-                      fontSize: '1rem'
-                    }}
-                    placeholder="your@email.com"
-                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)'}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#d1d5db' }}>Message</label>
-                  <textarea
-                    rows="5"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      background: 'rgba(15, 23, 42, 0.5)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      transition: 'border-color 0.3s',
-                      color: 'white',
-                      resize: 'none',
-                      fontSize: '1rem'
-                    }}
-                    placeholder="Tell us about your needs..."
-                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)'}
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="neon-glow"
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    background: 'linear-gradient(to right, #2563eb, #06b6d4)',
-                    borderRadius: '0.5rem',
-                    fontWeight: 'bold',
-                    fontSize: '1.125rem',
-                    transition: 'all 0.3s',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'white'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.boxShadow = '0 25px 50px -12px rgba(59, 130, 246, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.boxShadow = '';
-                  }}
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
+          
           </div>
         </div>
       </section>
