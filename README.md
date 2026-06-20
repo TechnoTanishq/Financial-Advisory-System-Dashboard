@@ -2,6 +2,9 @@
 
 A personal finance dashboard built with React, Vite, and Tailwind CSS. Upload your bank statement CSV and get instant analytics, spending breakdowns, budget tracking, and AI-powered financial advice.
 
+# Live Link 
+<a> https://finance-advisory.netlify.app/</a>
+
 ## Features
 
 - **Landing Page** — Marketing page with live chart previews and a demo flow
