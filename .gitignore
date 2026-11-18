@@ -16,6 +16,13 @@ dist-ssr
 .env
 .env.*
 
+# Python backend — exclude venv and cache
+backend/.venv/
+backend/__pycache__/
+backend/agents/__pycache__/
+backend/api/__pycache__/
+backend/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
