@@ -639,7 +639,7 @@ export default function FinancialChatbot() {
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <p className={`text-xs ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Python FastAPI · llama-3.1-8b-instant · 5-Agent RAG
+                  Python FastAPI · Qwen 3.8-27B · 5-Agent RAG
                 </p>
               </div>
             </div>

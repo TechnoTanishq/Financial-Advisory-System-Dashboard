@@ -1,21 +1,15 @@
 """
 Writer Agent
 ============
-Takes the Planner's plan + Researcher's analysis and writes the
-user-facing response.
-
-Streams tokens back via an async generator so the orchestrator can
-forward them to the client as Server-Sent Events.
+Streams the final user-facing response token by token.
+Temperature 0.6.
 """
 
 from __future__ import annotations
 
-import json
 from typing import AsyncGenerator
 
-import httpx
-
-from config import settings
+from agents.groq_client import groq_stream
 
 
 SYSTEM_PROMPT = """\
@@ -42,12 +36,7 @@ async def run_stream(
     analysis: str,
     plan: str,
 ) -> AsyncGenerator[str, None]:
-    """
-    Stream the Writer's response token by token.
-
-    Yields each text token as a plain string.
-    The full draft is NOT accumulated here — the orchestrator does that.
-    """
+    """Yields each text token from the Writer's streamed response."""
     user_prompt = (
         f'USER QUERY: "{query}"\n\n'
         f"RESEARCH ANALYSIS (use these numbers):\n{analysis}\n\n"
@@ -55,33 +44,12 @@ async def run_stream(
         "Write the final response now. Be specific, warm, and actionable."
     )
 
-    async with httpx.AsyncClient(timeout=60) as client:
-        async with client.stream(
-            "POST",
-            settings.groq_url,
-            headers={
-                "Authorization": f"Bearer {settings.groq_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": settings.groq_model,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user",   "content": user_prompt},
-                ],
-                "temperature": 0.6,
-                "max_tokens": 600,
-                "stream": True,
-            },
-        ) as response:
-            response.raise_for_status()
-            async for line in response.aiter_lines():
-                if not line.startswith("data: ") or line == "data: [DONE]":
-                    continue
-                try:
-                    payload = json.loads(line[6:])
-                    token: str = payload["choices"][0]["delta"].get("content", "")
-                    if token:
-                        yield token
-                except (json.JSONDecodeError, KeyError):
-                    continue  # skip malformed chunks
+    async for token in groq_stream(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": user_prompt},
+        ],
+        temperature=0.6,
+        max_tokens=600,
+    ):
+        yield token

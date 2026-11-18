@@ -8,9 +8,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    # Groq
+    # Groq — primary key
     groq_api_key: str
-    groq_model: str = "llama-3.1-8b-instant"
+    # Fallback key used automatically on 429 rate-limit
+    groq_api_key_fallback: str = ""
+    groq_model: str = "qwen/qwen3.8-27b"
     groq_url: str = "https://api.groq.com/openai/v1/chat/completions"
 
     # CORS — comma-separated origins

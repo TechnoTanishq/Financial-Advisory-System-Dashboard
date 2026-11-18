@@ -8,6 +8,27 @@ A personal finance dashboard built with React, Vite, and Tailwind CSS — powere
 
 ---
 
+## Screenshots
+
+### Dashboard
+![Dashboard](public/screenshots/main-dashboard.png)
+
+### Reports
+![Reports](public/screenshots/chatbot-dashboard.png)
+
+### Analytics
+![Analytics](public/screenshots/analytics.png)
+
+![Analytics Detail](public/screenshots/analytics-2.png)
+
+### AI Chatbot — Live Agent Pipeline
+![Chatbot Pipeline](public/screenshots/chatbot-pipeline.png)
+
+### AI Chatbot — Response with Confidence Score
+![Chatbot Response](public/screenshots/chatbot-response.png)
+
+---
+
 ## Features
 
 - **Landing Page** — Marketing page with live chart previews and a demo flow

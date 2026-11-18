@@ -4,14 +4,12 @@ Researcher Agent
 Analyses the RAG-retrieved context and extracts precise, factual
 financial insights. Returns a structured text report.
 
-Temperature is kept very low (0.2) to favour factual accuracy.
+Temperature 0.2 — favours factual accuracy.
 """
 
 from __future__ import annotations
 
-import httpx
-
-from config import settings
+from agents.groq_client import groq_post
 
 
 SYSTEM_PROMPT = """\
@@ -33,42 +31,18 @@ Keep your output concise and factual. No advice yet — that comes later."""
 
 
 async def run(query: str, context_text: str) -> str:
-    """
-    Call the LLM to produce a structured research report.
-
-    Parameters
-    ----------
-    query        : Original user question
-    context_text : Combined RAG context from rag_retriever.retrieve()
-
-    Returns
-    -------
-    str — structured research report text
-    """
     user_prompt = (
         f'USER QUERY: "{query}"\n\n'
         f"RETRIEVED FINANCIAL DATA:\n{context_text}\n\n"
         "Analyse this data and produce a structured research report as described."
     )
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.post(
-            settings.groq_url,
-            headers={
-                "Authorization": f"Bearer {settings.groq_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": settings.groq_model,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user",   "content": user_prompt},
-                ],
-                "temperature": 0.2,
-                "max_tokens": 600,
-            },
-        )
-
-    response.raise_for_status()
-    data = response.json()
+    data = await groq_post(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": user_prompt},
+        ],
+        temperature=0.2,
+        max_tokens=600,
+    )
     return data["choices"][0]["message"]["content"]

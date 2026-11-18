@@ -1,23 +1,13 @@
 """
 Planner Agent
 =============
-Takes the Researcher's analysis and the original query, then decides:
-  - Which sections the final answer should cover (2-4 max)
-  - Tone: reassuring / cautionary / motivational / analytical / celebratory
-  - Depth: brief / standard / detailed
-  - Which numbers MUST appear
-  - What to avoid
-  - A single call-to-action
-
-Temperature 0.3 — deterministic enough to give a consistent plan,
-with slight creativity for tone selection.
+Decides response sections, tone, depth, must-include numbers, and
+a single call-to-action. Temperature 0.3.
 """
 
 from __future__ import annotations
 
-import httpx
-
-from config import settings
+from agents.groq_client import groq_post
 
 
 SYSTEM_PROMPT = """\
@@ -36,42 +26,18 @@ Keep the plan short and structured. The Writer will follow it precisely."""
 
 
 async def run(query: str, analysis: str) -> str:
-    """
-    Produce a structured response plan.
-
-    Parameters
-    ----------
-    query    : Original user question
-    analysis : Output text from researcher.run()
-
-    Returns
-    -------
-    str — structured plan text
-    """
     user_prompt = (
         f'USER QUERY: "{query}"\n\n'
         f"RESEARCHER ANALYSIS:\n{analysis}\n\n"
         "Create the response plan now."
     )
 
-    async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.post(
-            settings.groq_url,
-            headers={
-                "Authorization": f"Bearer {settings.groq_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": settings.groq_model,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user",   "content": user_prompt},
-                ],
-                "temperature": 0.3,
-                "max_tokens": 400,
-            },
-        )
-
-    response.raise_for_status()
-    data = response.json()
+    data = await groq_post(
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",   "content": user_prompt},
+        ],
+        temperature=0.3,
+        max_tokens=400,
+    )
     return data["choices"][0]["message"]["content"]
